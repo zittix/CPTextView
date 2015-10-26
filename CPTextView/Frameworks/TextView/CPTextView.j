@@ -352,51 +352,59 @@ var kDelegateRespondsTo_textShouldBeginEditing                                  
     CPTimer         _scrollingTimer;
 }
 
+-(void)_init
+{
+    self._DOMElement.style.cursor = "text";
+    _textContainerInset = CGSizeMake(2,0);
+    _textContainerOrigin = CGPointMake(_bounds.origin.x, _bounds.origin.y);
+    
+    _isEditable = YES;
+    _isSelectable = YES;
+
+    _isFirstResponder = NO;
+    _delegate = nil;
+    _delegateRespondsToSelectorMask = 0;
+    _selectionRange = CPMakeRange(0, 0);
+
+    _selectionGranularity = CPSelectByCharacter;
+    _selectedTextAttributes = [CPDictionary dictionaryWithObject:[CPColor selectedTextBackgroundColor]
+                                            forKey:CPBackgroundColorAttributeName];
+
+    _insertionPointColor = [CPColor blackColor];
+    _textColor = [CPColor blackColor];
+    _font = [CPFont systemFontOfSize:12.0];
+    [self setFont:_font];
+
+    _typingAttributes = [[CPDictionary alloc] initWithObjects:[_font, _textColor] forKeys:[CPFontAttributeName, CPForegroundColorAttributeName]];
+    
+    var aFrame = [self frame];
+
+    _minSize = CGSizeCreateCopy(aFrame.size);
+    _maxSize = CGSizeMake(aFrame.size.width, 1e7);
+
+    _isRichText = YES;
+    _usesFontPanel = YES;
+    _allowsUndo = YES;
+    _isVerticallyResizable = YES;
+    _isHorizontallyResizable = NO;
+
+    _caret = [[_CPCaret alloc] initWithTextView:self];
+    [_caret setRect:CGRectMake(0, 0, 1, 11)]
+
+    [self setBackgroundColor:[CPColor whiteColor]];
+
+    [self registerForDraggedTypes:[CPColorDragType]];
+}
+
 - (id)initWithFrame:(CGRect)aFrame textContainer:(CPTextContainer)aContainer
 {
     self = [super initWithFrame:aFrame];
 
     if (self)
     {
-        self._DOMElement.style.cursor = "text";
-        _textContainerInset = CGSizeMake(2,0);
-        _textContainerOrigin = CGPointMake(_bounds.origin.x, _bounds.origin.y);
+        [self _init];
         [aContainer setTextView:self];
-        _isEditable = YES;
-        _isSelectable = YES;
-
-        _isFirstResponder = NO;
-        _delegate = nil;
-        _delegateRespondsToSelectorMask = 0;
-        _selectionRange = CPMakeRange(0, 0);
-
-        _selectionGranularity = CPSelectByCharacter;
-        _selectedTextAttributes = [CPDictionary dictionaryWithObject:[CPColor selectedTextBackgroundColor]
-                                                forKey:CPBackgroundColorAttributeName];
-
-        _insertionPointColor = [CPColor blackColor];
-        _textColor = [CPColor blackColor];
-        _font = [CPFont systemFontOfSize:12.0];
-        [self setFont:_font];
-
-        _typingAttributes = [[CPDictionary alloc] initWithObjects:[_font, _textColor] forKeys:[CPFontAttributeName, CPForegroundColorAttributeName]];
-
-        _minSize = CGSizeCreateCopy(aFrame.size);
-        _maxSize = CGSizeMake(aFrame.size.width, 1e7);
-
-        _isRichText = YES;
-        _usesFontPanel = YES;
-        _allowsUndo = YES;
-        _isVerticallyResizable = YES;
-        _isHorizontallyResizable = NO;
-
-        _caret = [[_CPCaret alloc] initWithTextView:self];
-        [_caret setRect:CGRectMake(0, 0, 1, 11)]
-
-        [self setBackgroundColor:[CPColor whiteColor]];
     }
-
-    [self registerForDraggedTypes:[CPColorDragType]];
 
     return self;
 }
@@ -2164,6 +2172,33 @@ var kDelegateRespondsTo_textShouldBeginEditing                                  
 
 @end
 
+
+@implementation CPTextView(CPCoding)
+
+- (id) initWithCoder:(CPCoder)aCoder  
+{
+    self = [super initWithCoder:aCoder];
+
+    if (self)
+    {
+        var aFrame = [self frame];
+
+        var layoutManager = [[CPLayoutManager alloc] init],
+        textStorage = [[CPTextStorage alloc] init],
+        aContainer = [[CPTextContainer alloc] initWithContainerSize:CGSizeMake(aFrame.size.width, 1e7)];
+
+        [textStorage addLayoutManager:layoutManager];
+        [layoutManager addTextContainer:aContainer];
+
+        [self _init];
+
+        [aContainer setTextView:self];
+    }
+
+    return self;
+}
+
+@end
 
 @implementation _CPCaret : CPObject
 {
